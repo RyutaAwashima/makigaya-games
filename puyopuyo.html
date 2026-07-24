@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Puyo Battle</title>
+  <style>
+    :root {
+      --bg1: #f8efe2;
+      --bg2: #c7e6f5;
+      --panel: rgba(255, 255, 255, 0.82);
+      --ink: #1f2430;
+      --line: rgba(31, 36, 48, 0.2);
+      --accent: #1d7db3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background:
+        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.8), transparent 34%),
+        radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.5), transparent 30%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+    }
+
+    .app {
+      width: min(960px, 98vw);
+      display: grid;
+      gap: 10px;
+    }
+
+    .header,
+    .help {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 0.03em;
+    }
+
+    .badge {
+      font-size: 0.85rem;
+      border: 1px solid rgba(29, 125, 179, 0.35);
+      color: #0b537b;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 700;
+    }
+
+    .stage-wrap {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 34px rgba(15, 22, 40, 0.18);
+      background: #d7f0ff;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+
+    .help {
+      font-size: 0.9rem;
+      line-height: 1.45;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+    }
+
+    .help strong {
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 780px) {
+      .title {
+        font-size: 1rem;
+      }
+
+      .help {
+        font-size: 0.82rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">Mini Puyo Battle</div>
+      <div class="badge" id="status">Ready</div>
+    </div>
+
+    <div class="stage-wrap">
+      <canvas id="game" width="960" height="600" aria-label="puyo style game"></canvas>
+    </div>
+
+    <div class="help">
+      <span><strong>Move:</strong> ← →</span>
+      <span><strong>Soft Drop:</strong> ↓</span>
+      <span><strong>Rotate:</strong> Z / X</span>
+      <span><strong>Hard Drop:</strong> Space</span>
+      <span><strong>Restart:</strong> R</span>
+      <span>同色4つ以上で消えます。連鎖で高得点。</span>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const statusEl = document.getElementById("status");
+
+    const COLS = 6;
+    const ROWS = 14;
+    const VISIBLE_ROWS = 12;
+    const CELL = 38;
+    const BOARD_X = 220;
+    const BOARD_Y = 72;
+    const DROP_FRAMES = 30;
+
+    const COLORS = ["#ff5d73", "#3c9bff", "#ffd74d", "#58c87b", "#b36df2"];
+
+    const state = {
+      board: [],
+      current: null,
+      next: null,
+      score: 0,
+      chain: 0,
+      gameOver: false,
+      frame: 0,
+      lastClearCount: 0,
+      floatingTextTimer: 0,
+      lockDelay: 0
+    };
+
+    const keysHeld = new Set();
+    const keyOnce = new Set();
+
+    function makeBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function randColor() {
+      return Math.floor(Math.random() * COLORS.length);
+    }
+
+    function makePair() {
+      return {
+        x: 2,
+        y: 1,
+        dx: 0,
+        dy: -1,
+        c1: randColor(),
+        c2: randColor()
+      };
+    }
+
+    function resetGame() {
+      state.board = makeBoard();
+      state.score = 0;
+      state.chain = 0;
+      state.gameOver = false;
+      state.frame = 0;
+      state.lastClearCount = 0;
+      state.floatingTextTimer = 0;
+      state.lockDelay = 0;
+      state.current = makePair();
+      state.next = makePair();
+      statusEl.textContent = "Playing";
+
+      if (!canPlacePair(state.current)) {
+        state.gameOver = true;
+        statusEl.textContent = "Game Over";
+      }
+    }
+
+    function getCells(pair) {
+      return [
+        { x: pair.x, y: pair.y, color: pair.c1 },
+        { x: pair.x + pair.dx, y: pair.y + pair.dy, color: pair.c2 }
+      ];
+    }
+
+    function isInside(x, y) {
+      return x >= 0 && x < COLS && y < ROWS;
+    }
+
+    function canOccupy(x, y) {
+      if (!isInside(x, y)) return false;
+      if (y < 0) return true;
+      return state.board[y][x] === null;
+    }
+
+    function canPlacePair(pair) {
+      return getCells(pair).every((c) => canOccupy(c.x, c.y));
+    }
+
+    function movePair(dx, dy) {
+      const moved = { ...state.current, x: state.current.x + dx, y: state.current.y + dy };
+      if (canPlacePair(moved)) {
+        state.current = moved;
+        return true;
+      }
+      return false;
+    }
+
+    function rotatePair(dir) {
+      const p = state.current;
+      const rotated = { ...p, dx: -p.dy * dir, dy: p.dx * dir };
+      if (canPlacePair(rotated)) {
+        state.current = rotated;
+        return;
+      }
+
+      const kicks = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 }
+      ];
+      for (const k of kicks) {
+        const kicked = { ...rotated, x: rotated.x + k.x, y: rotated.y + k.y };
+        if (canPlacePair(kicked)) {
+          state.current = kicked;
+          return;
+        }
+      }
+    }
+
+    function placeCurrentPair() {
+      for (const c of getCells(state.current)) {
+        if (c.y < 0) {
+          state.gameOver = true;
+          statusEl.textContent = "Game Over";
+          return;
+        }
+        state.board[c.y][c.x] = c.color;
+      }
+
+      resolveBoard();
+
+      state.current = state.next;
+      state.current.x = 2;
+      state.current.y = 1;
+      state.current.dx = 0;
+      state.current.dy = -1;
+      state.next = makePair();
+
+      if (!canPlacePair(state.current)) {
+        state.gameOver = true;
+        statusEl.textContent = "Game Over";
+      }
+    }
+
+    function applyGravity() {
+      let moved = false;
+      for (let y = ROWS - 2; y >= 0; y -= 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          if (state.board[y][x] !== null && state.board[y + 1][x] === null) {
+            state.board[y + 1][x] = state.board[y][x];
+            state.board[y][x] = null;
+            moved = true;
+          }
+        }
+      }
+      return moved;
+    }
+
+    function collectGroup(startX, startY, visited) {
+      const color = state.board[startY][startX];
+      if (color === null) return [];
+
+      const stack = [{ x: startX, y: startY }];
+      const group = [];
+      visited[startY][startX] = true;
+
+      while (stack.length > 0) {
+        const n = stack.pop();
+        group.push(n);
+
+        const dirs = [
+          { x: 1, y: 0 },
+          { x: -1, y: 0 },
+          { x: 0, y: 1 },
+          { x: 0, y: -1 }
+        ];
+
+        for (const d of dirs) {
+          const nx = n.x + d.x;
+          const ny = n.y + d.y;
+          if (!isInside(nx, ny) || ny < 0) continue;
+          if (visited[ny][nx]) continue;
+          if (state.board[ny][nx] !== color) continue;
+          visited[ny][nx] = true;
+          stack.push({ x: nx, y: ny });
+        }
+      }
+
+      return group;
+    }
+
+    function clearGroups() {
+      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      const toClear = [];
+
+      for (let y = 0; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          if (state.board[y][x] === null || visited[y][x]) continue;
+          const g = collectGroup(x, y, visited);
+          if (g.length >= 4) toClear.push(...g);
+        }
+      }
+
+      for (const c of toClear) {
+        state.board[c.y][c.x] = null;
+      }
+
+      return toClear.length;
+    }
+
+    function resolveBoard() {
+      let chain = 0;
+      let totalCleared = 0;
+
+      while (true) {
+        while (applyGravity()) {
+          // settle all floating blobs before evaluating chains
+        }
+
+        const cleared = clearGroups();
+        if (cleared === 0) break;
+
+        chain += 1;
+        totalCleared += cleared;
+        const chainBonus = chain * chain * 40;
+        const clearBonus = cleared * 12;
+        state.score += clearBonus + chainBonus;
+      }
+
+      state.chain = chain;
+      state.lastClearCount = totalCleared;
+      state.floatingTextTimer = totalCleared > 0 ? 80 : 0;
+      if (chain >= 2) {
+        statusEl.textContent = chain + " Chain";
+      } else {
+        statusEl.textContent = "Playing";
+      }
+    }
+
+    function hardDrop() {
+      if (!state.current || state.gameOver) return;
+      let dropped = 0;
+      while (movePair(0, 1)) dropped += 1;
+      state.score += dropped;
+      placeCurrentPair();
+    }
+
+    function updateInput() {
+      if (state.gameOver) {
+        if (keyOnce.has("r")) resetGame();
+        keyOnce.clear();
+        return;
+      }
+
+      if (keyOnce.has("arrowleft")) movePair(-1, 0);
+      if (keyOnce.has("arrowright")) movePair(1, 0);
+      if (keyOnce.has("z")) rotatePair(-1);
+      if (keyOnce.has("x")) rotatePair(1);
+      if (keyOnce.has(" ")) hardDrop();
+      if (keyOnce.has("r")) resetGame();
+
+      keyOnce.clear();
+    }
+
+    function updateFalling() {
+      if (state.gameOver) return;
+
+      const softDropping = keysHeld.has("arrowdown");
+      const interval = softDropping ? 4 : DROP_FRAMES;
+
+      if (state.frame % interval !== 0) return;
+
+      if (!movePair(0, 1)) {
+        state.lockDelay += 1;
+        if (state.lockDelay >= 2) {
+          state.lockDelay = 0;
+          placeCurrentPair();
+        }
+      } else {
+        state.lockDelay = 0;
+      }
+    }
+
+    function drawRoundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawBlob(px, py, colorIndex, alpha = 1) {
+      const color = COLORS[colorIndex];
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      drawRoundedRect(px + 2, py + 2, CELL - 4, CELL - 4, 12);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(px + CELL * 0.36, py + CELL * 0.34, CELL * 0.14, CELL * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBoard() {
+      ctx.fillStyle = "rgba(10, 22, 36, 0.7)";
+      drawRoundedRect(BOARD_X - 14, BOARD_Y - 14, COLS * CELL + 28, VISIBLE_ROWS * CELL + 28, 18);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(220, 244, 255, 0.12)";
+      for (let y = 0; y < VISIBLE_ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          ctx.fillRect(BOARD_X + x * CELL, BOARD_Y + y * CELL, CELL - 1, CELL - 1);
+        }
+      }
+
+      const offsetY = ROWS - VISIBLE_ROWS;
+      for (let y = offsetY; y < ROWS; y += 1) {
+        for (let x = 0; x < COLS; x += 1) {
+          const c = state.board[y][x];
+          if (c !== null) {
+            const py = BOARD_Y + (y - offsetY) * CELL;
+            drawBlob(BOARD_X + x * CELL, py, c);
+          }
+        }
+      }
+
+      if (state.current && !state.gameOver) {
+        for (const c of getCells(state.current)) {
+          if (c.y >= offsetY) {
+            const py = BOARD_Y + (c.y - offsetY) * CELL;
+            drawBlob(BOARD_X + c.x * CELL, py, c.color, 0.95);
+          }
+        }
+      }
+    }
+
+    function drawUiPanel() {
+      const panelX = 520;
+      const panelY = 88;
+      const panelW = 250;
+      const panelH = 420;
+
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      drawRoundedRect(panelX, panelY, panelW, panelH, 16);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(20,30,42,0.18)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = "#142233";
+      ctx.font = "700 28px Trebuchet MS";
+      ctx.fillText("SCORE", panelX + 20, panelY + 52);
+
+      ctx.font = "800 42px Trebuchet MS";
+      ctx.fillStyle = "#0d5e90";
+      ctx.fillText(String(state.score), panelX + 20, panelY + 102);
+
+      ctx.fillStyle = "#142233";
+      ctx.font = "700 24px Trebuchet MS";
+      ctx.fillText("NEXT", panelX + 20, panelY + 156);
+
+      if (state.next) {
+        const nx = panelX + 36;
+        const ny = panelY + 182;
+        drawBlob(nx, ny, state.next.c1);
+        drawBlob(nx, ny - CELL, state.next.c2);
+      }
+
+      ctx.font = "700 22px Trebuchet MS";
+      ctx.fillStyle = "#142233";
+      ctx.fillText("LAST CHAIN", panelX + 20, panelY + 320);
+
+      ctx.font = "800 34px Trebuchet MS";
+      ctx.fillStyle = state.chain >= 2 ? "#a43f0a" : "#35566f";
+      ctx.fillText(String(state.chain), panelX + 20, panelY + 364);
+
+      if (state.floatingTextTimer > 0 && state.lastClearCount > 0) {
+        const t = state.floatingTextTimer;
+        const lift = (80 - t) * 0.4;
+        ctx.globalAlpha = Math.min(1, t / 18);
+        ctx.font = "700 24px Trebuchet MS";
+        ctx.fillStyle = "#9f2d00";
+        ctx.fillText("+" + state.lastClearCount + " clear", panelX + 20, panelY + 402 - lift);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function drawBackground(t) {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, "#dcf4ff");
+      g.addColorStop(1, "#8dcbe6");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(170 + Math.sin(t * 0.00035) * 12, 88, 130, 46, 0, 0, Math.PI * 2);
+      ctx.ellipse(760 + Math.cos(t * 0.00026) * 18, 102, 180, 58, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawGameOver() {
+      if (!state.gameOver) return;
+      ctx.fillStyle = "rgba(7, 14, 25, 0.55)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.font = "800 56px Trebuchet MS";
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 12);
+      ctx.font = "700 26px Trebuchet MS";
+      ctx.fillText("Press R to Retry", canvas.width / 2, canvas.height / 2 + 34);
+      ctx.textAlign = "left";
+    }
+
+    function update() {
+      state.frame += 1;
+      if (state.floatingTextTimer > 0) state.floatingTextTimer -= 1;
+
+      updateInput();
+      updateFalling();
+    }
+
+    function render(time) {
+      drawBackground(time);
+      drawBoard();
+      drawUiPanel();
+      drawGameOver();
+    }
+
+    function loop(time) {
+      update();
+      render(time);
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (["arrowleft", "arrowright", "arrowdown", "arrowup", "z", "x", " ", "r"].includes(k)) {
+        e.preventDefault();
+      }
+      if (!keysHeld.has(k)) keyOnce.add(k);
+      keysHeld.add(k);
+    });
+
+    window.addEventListener("keyup", (e) => {
+      keysHeld.delete(e.key.toLowerCase());
+    });
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
