@@ -28,7 +28,19 @@
     .stage-wrap { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #b9e2ef; box-shadow: 0 16px 34px rgba(15,22,40,.2); }
     canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; }
     .help { display: flex; flex-wrap: wrap; gap: 8px 16px; line-height: 1.45; font-size: .88rem; }
-    @media (max-width: 700px) { .title { font-size: 1rem; } .status { font-size: .82rem; } .help { font-size: .78rem; } }
+    .touch-controls { display: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; backdrop-filter: blur(4px); gap: 12px; align-items: center; justify-content: center; }
+    .touch-controls .touch-group { display: flex; gap: 6px; align-items: center; }
+    .touch-btn { display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.72); color: var(--ink); font-size: 1.4rem; font-weight: 700; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 3px 0 rgba(0,0,0,.12); transition: transform .06s, box-shadow .06s; }
+    .touch-btn:active, .touch-btn.active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.12); background: rgba(200,220,240,.9); }
+    .touch-btn.wide { width: 80px; font-size: 1rem; }
+    .touch-btn.drop { background: rgba(29,125,179,.25); border-color: rgba(29,125,179,.4); }
+    .touch-btn.drop:active, .touch-btn.drop.active { background: rgba(29,125,179,.45); }
+    .touch-btn.restart { width: 54px; font-size: .85rem; background: rgba(255,93,115,.15); border-color: rgba(255,93,115,.3); }
+    .touch-btn.restart:active, .touch-btn.restart.active { background: rgba(255,93,115,.35); }
+    .touch-sep { width: 1px; height: 40px; background: var(--line); margin: 0 4px; }
+    body.touch-device .touch-controls { display: flex; }
+    @media (pointer: coarse) { .touch-controls { display: flex; } }
+    @media (max-width: 700px) { .title { font-size: 1rem; } .status { font-size: .82rem; } .help { font-size: .78rem; } .touch-btn { width: 46px; height: 46px; font-size: 1.2rem; } .touch-btn.wide { width: 68px; font-size: .85rem; } }
   </style>
 </head>
 <body>
@@ -37,6 +49,26 @@
     <section class="setup" id="setup"><h2>対戦設定</h2><p>プレイスタイルとCPUの強さを選んでください。</p><div class="settings"><label>モード <select id="mode"><option value="cpu">CPU戦</option><option value="solo">個人戦</option></select></label><label>CPUレベル <select id="cpuLevel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label><label><input id="garbage" type="checkbox" checked /> お邪魔ぷよあり</label></div><button class="start-button" id="startButton" type="button">対戦開始</button></section>
     <div class="stage-wrap game-ui"><canvas id="game" width="1120" height="700" aria-label="ぷよぷよ CPU対戦ゲーム"></canvas></div>
     <div class="help game-ui"><span><strong>PLAYER:</strong> ← → 移動 / ↓ 落下 / Z X 回転 / Space 落とす</span><span><strong>連鎖:</strong> おじゃまぷよを相手へ送ります</span><span><strong>R:</strong> 再スタート</span></div>
+    <div class="touch-controls game-ui" id="touchControls">
+      <div class="touch-group">
+        <button class="touch-btn" data-key="arrowleft" aria-label="左移動">◀</button>
+        <button class="touch-btn" data-key="arrowdown" aria-label="下移動">▼</button>
+        <button class="touch-btn" data-key="arrowright" aria-label="右移動">▶</button>
+      </div>
+      <div class="touch-sep"></div>
+      <div class="touch-group">
+        <button class="touch-btn" data-key="z" aria-label="左回転">↺</button>
+        <button class="touch-btn" data-key="x" aria-label="右回転">↻</button>
+      </div>
+      <div class="touch-sep"></div>
+      <div class="touch-group">
+        <button class="touch-btn wide drop" data-key=" " aria-label="落とす">ドロップ</button>
+      </div>
+      <div class="touch-sep"></div>
+      <div class="touch-group">
+        <button class="touch-btn restart" data-key="r" aria-label="再スタート">再戦</button>
+      </div>
+    </div>
   </div>
   <script>
     const canvas = document.getElementById("game");
@@ -77,7 +109,7 @@
     function simulate(game, x, rotation) { const test = copyGame(game); test.current.x = x; test.current.y = 1; test.current.dx = [0, 1, 0, -1][rotation]; test.current.dy = [-1, 0, 1, 0][rotation]; if (!canPlace(test, test.current)) return null; while (movePair(test, 0, 1)); const result = placePair(test, false); let height = 0, holes = 0; for (let col = 0; col < COLS; col++) { let found = false; for (let y = 0; y < ROWS; y++) { if (test.board[y][col] !== null) { found = true; height += ROWS - y; } else if (found) holes++; } } return { x, rotation, value: result.cleared * 100 + result.chain * 500 - height * 2 - holes * 30 }; }
     function chooseCpuMove(game) { let best = null; const noise = (10 - settings.cpuLevel) * 35; for (let rotation = 0; rotation < 4; rotation++) for (let x = 0; x < COLS; x++) { const candidate = simulate(game, x, rotation); if (candidate) { candidate.value += Math.random() * noise; if (!best || candidate.value > best.value) best = candidate; } } return best || { x: 2, rotation: 0 }; }
     function updateCpu() { if (settings.mode !== "cpu" || cpu.gameOver || match.over) return; if (!cpu.aiMove) { cpu.aiMove = chooseCpuMove(cpu); cpu.aiWait = 90 + (9 - settings.cpuLevel) * 8; } if (cpu.aiWait > 0) { cpu.aiWait--; return; } const target = cpu.aiMove; let currentRotation = [0, 1, 2, 3].findIndex((r) => cpu.current.dx === [0, 1, 0, -1][r] && cpu.current.dy === [-1, 0, 1, 0][r]); if (currentRotation < 0) currentRotation = 0; if (currentRotation !== target.rotation) { rotatePair(cpu, 1); return; } if (cpu.current.x < target.x) { movePair(cpu, 1, 0); return; } if (cpu.current.x > target.x) { movePair(cpu, -1, 0); return; } while (movePair(cpu, 0, 1)); const result = placePair(cpu); sendGarbage(player, result); cpu.aiMove = null; }
-    function updatePlayer() { if (player.gameOver || match.over) return; if (once.has("arrowleft")) movePair(player, -1, 0); if (once.has("arrowright")) movePair(player, 1, 0); if (once.has("z")) rotatePair(player, -1); if (once.has("x")) rotatePair(player, 1); if (once.has(" ")) { while (movePair(player, 0, 1)); const result = placePair(player); sendGarbage(cpu, result); } const interval = held.has("arrowdown") ? 4 : DROP_FRAMES; if (player.frame % interval === 0 && !movePair(player, 0, 1)) { player.lockDelay++; if (player.lockDelay >= 2) { player.lockDelay = 0; const result = placePair(player); sendGarbage(cpu, result); } } else if (player.current) player.lockDelay = 0; player.frame++; }
+    function updatePlayer() { if (player.gameOver || match.over) return; if (once.has("arrowleft")) movePair(player, -1, 0); if (once.has("arrowright")) movePair(player, 1, 0); if (once.has("z")) rotatePair(player, -1); if (once.has("x")) rotatePair(player, 1); if (once.has(" ")) { while (movePair(player, 0, 1)); const result = placePair(player); sendGarbage(cpu, result); player.frame = 0; } const interval = held.has("arrowdown") ? 4 : DROP_FRAMES; if (player.frame % interval === 0 && !movePair(player, 0, 1)) { player.lockDelay++; if (player.lockDelay >= 1) { player.lockDelay = 0; const result = placePair(player); sendGarbage(cpu, result); player.frame = 0; } } else if (player.current) player.lockDelay = 0; player.frame++; }
     function updateMatch() { const ended = settings.mode === "cpu" ? player.gameOver || cpu.gameOver : player.gameOver; if (!match.over && ended) { match.over = true; match.winner = player.gameOver ? (settings.mode === "cpu" ? "CPU" : "GAME") : "PLAYER"; statusEl.textContent = match.winner + " WIN"; } }
     function roundedRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
     function drawBlob(x, y, color, alpha = 1) { ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = COLORS[color]; roundedRect(x + 2, y + 2, CELL - 4, CELL - 4, 12); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(x + CELL * .36, y + CELL * .34, CELL * .14, CELL * .12, 0, 0, Math.PI * 2); ctx.fill(); if (color !== GARBAGE) { ctx.fillStyle = "#17202b"; ctx.strokeStyle = "#17202b"; ctx.lineWidth = 2; ctx.beginPath(); if (color === 0) { ctx.moveTo(x + 9, y + 17); ctx.lineTo(x + 16, y + 19); ctx.moveTo(x + 22, y + 19); ctx.lineTo(x + 29, y + 17); } else if (color === 1) { ctx.moveTo(x + 9, y + 19); ctx.quadraticCurveTo(x + 13, y + 16, x + 17, y + 19); ctx.moveTo(x + 21, y + 19); ctx.quadraticCurveTo(x + 25, y + 16, x + 29, y + 19); } else { ctx.arc(x + 13, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.arc(x + 25, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); } ctx.stroke(); if (color !== 1) { ctx.fillStyle = "#17202b"; ctx.beginPath(); ctx.arc(x + 13, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.arc(x + 25, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x + 12, y + 19, 1, 0, Math.PI * 2); ctx.arc(x + 24, y + 19, 1, 0, Math.PI * 2); ctx.fill(); } ctx.beginPath(); if (color === 0) { ctx.arc(x + 19, y + 28, 5, Math.PI + .2, Math.PI * 2 - .2); } else if (color === 1) { ctx.moveTo(x + 15, y + 27); ctx.lineTo(x + 23, y + 27); } else if (color === 2) { ctx.arc(x + 19, y + 24, 6, 0.1, Math.PI - .1); } else if (color === 3) { ctx.arc(x + 19, y + 27, 4, 0, Math.PI * 2); } else { ctx.arc(x + 19, y + 26, 5, Math.PI + .15, Math.PI * 2 - .15); } ctx.stroke(); } ctx.restore(); }
@@ -91,6 +123,36 @@
     cpuLevelEl.addEventListener("change", () => { settings.cpuLevel = Number(cpuLevelEl.value); resetMatch(); });
     garbageEl.addEventListener("change", () => { settings.garbage = garbageEl.checked; resetMatch(); });
     startButton.addEventListener("click", () => { document.body.classList.add("started"); resetMatch(); });
+    /* Touch controls */
+    const repeatKeys = new Set(["arrowleft", "arrowright", "arrowdown"]);
+    const repeatTimers = {};
+    const REPEAT_DELAY = 180, REPEAT_INTERVAL = 60;
+    function touchKeyDown(key) {
+      if (key === "r") { resetMatch(); return; }
+      if (!held.has(key)) once.add(key);
+      held.add(key);
+      if (repeatKeys.has(key)) {
+        clearTimeout(repeatTimers[key]);
+        repeatTimers[key] = setTimeout(function tick() {
+          once.add(key);
+          repeatTimers[key] = setTimeout(tick, REPEAT_INTERVAL);
+        }, REPEAT_DELAY);
+      }
+    }
+    function touchKeyUp(key) {
+      held.delete(key);
+      clearTimeout(repeatTimers[key]);
+      delete repeatTimers[key];
+    }
+    document.querySelectorAll(".touch-btn").forEach((btn) => {
+      const key = btn.dataset.key;
+      btn.addEventListener("touchstart", (e) => { e.preventDefault(); btn.classList.add("active"); touchKeyDown(key); }, { passive: false });
+      btn.addEventListener("touchend", (e) => { e.preventDefault(); btn.classList.remove("active"); touchKeyUp(key); }, { passive: false });
+      btn.addEventListener("touchcancel", (e) => { btn.classList.remove("active"); touchKeyUp(key); });
+      btn.addEventListener("mousedown", (e) => { e.preventDefault(); btn.classList.add("active"); touchKeyDown(key); });
+      btn.addEventListener("mouseup", (e) => { btn.classList.remove("active"); touchKeyUp(key); });
+      btn.addEventListener("mouseleave", () => { btn.classList.remove("active"); touchKeyUp(key); });
+    });
     resetMatch(); requestAnimationFrame(loop);
   </script>
 </body>
