@@ -5,594 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Puyo Battle</title>
   <style>
-    :root {
-      --bg1: #f8efe2;
-      --bg2: #c7e6f5;
-      --panel: rgba(255, 255, 255, 0.82);
-      --ink: #1f2430;
-      --line: rgba(31, 36, 48, 0.2);
-      --accent: #1d7db3;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 16px;
-      color: var(--ink);
-      font-family: "Trebuchet MS", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background:
-        radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.8), transparent 34%),
-        radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.5), transparent 30%),
-        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
-    }
-
-    .app {
-      width: min(960px, 98vw);
-      display: grid;
-      gap: 10px;
-    }
-
-    .header,
-    .help {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 10px 12px;
-      backdrop-filter: blur(4px);
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .title {
-      font-weight: 800;
-      font-size: 1.2rem;
-      letter-spacing: 0.03em;
-    }
-
-    .badge {
-      font-size: 0.85rem;
-      border: 1px solid rgba(29, 125, 179, 0.35);
-      color: #0b537b;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-weight: 700;
-    }
-
-    .stage-wrap {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 16px 34px rgba(15, 22, 40, 0.18);
-      background: #d7f0ff;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 10;
-    }
-
-    .help {
-      font-size: 0.9rem;
-      line-height: 1.45;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 16px;
-    }
-
-    .help strong {
-      letter-spacing: 0.02em;
-    }
-
-    @media (max-width: 780px) {
-      .title {
-        font-size: 1rem;
-      }
-
-      .help {
-        font-size: 0.82rem;
-      }
-    }
+    :root { --ink: #17202b; --line: rgba(23, 32, 43, .2); --panel: rgba(255, 255, 255, .84); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 14px; color: var(--ink); font-family: "Trebuchet MS", "Yu Gothic", sans-serif; background: radial-gradient(circle at 15% 12%, #fff8ef 0, transparent 35%), linear-gradient(150deg, #f7d6b5, #a9d7e9 72%, #7db6bd); }
+    .app { width: min(1120px, 98vw); display: grid; gap: 10px; }
+    .header, .help { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; backdrop-filter: blur(4px); }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .title { font-size: 1.2rem; font-weight: 800; letter-spacing: .03em; }
+    .status { padding: 5px 11px; border: 1px solid rgba(29, 125, 179, .35); border-radius: 999px; color: #0b537b; background: rgba(255,255,255,.7); font-weight: 700; }
+    .settings { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .84rem; }
+    .settings label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .settings select { border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--ink); background: #fff; }
+    .setup { display: grid; gap: 18px; padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: 0 16px 34px rgba(15,22,40,.18); }
+    .setup h2 { margin: 0; font-size: 1.6rem; }
+    .setup p { margin: 0; color: #405568; }
+    .setup .settings { gap: 14px 18px; font-size: 1rem; }
+    .start-button { width: fit-content; border: 0; border-radius: 8px; padding: 11px 22px; color: #fff; background: #1d7db3; font: 800 1rem "Trebuchet MS", "Yu Gothic", sans-serif; cursor: pointer; box-shadow: 0 5px 0 #145b80; }
+    .start-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #145b80; }
+    .game-ui { display: none; }
+    body.started .setup { display: none; }
+    body.started .game-ui { display: block; }
+    .stage-wrap { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #b9e2ef; box-shadow: 0 16px 34px rgba(15,22,40,.2); }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; }
+    .help { display: flex; flex-wrap: wrap; gap: 8px 16px; line-height: 1.45; font-size: .88rem; }
+    @media (max-width: 700px) { .title { font-size: 1rem; } .status { font-size: .82rem; } .help { font-size: .78rem; } }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="header">
-      <div class="title">Mini Puyo Battle</div>
-      <div class="badge" id="status">Ready</div>
-    </div>
-
-    <div class="stage-wrap">
-      <canvas id="game" width="960" height="600" aria-label="puyo style game"></canvas>
-    </div>
-
-    <div class="help">
-      <span><strong>Move:</strong> ← →</span>
-      <span><strong>Soft Drop:</strong> ↓</span>
-      <span><strong>Rotate:</strong> Z / X</span>
-      <span><strong>Hard Drop:</strong> Space</span>
-      <span><strong>Restart:</strong> R</span>
-      <span>同色4つ以上で消えます。連鎖で高得点。</span>
-    </div>
+    <div class="header"><div class="title">Mini Puyo Battle</div><div class="status" id="status">SETTING</div></div>
+    <section class="setup" id="setup"><h2>対戦設定</h2><p>プレイスタイルとCPUの強さを選んでください。</p><div class="settings"><label>モード <select id="mode"><option value="cpu">CPU戦</option><option value="solo">個人戦</option></select></label><label>CPUレベル <select id="cpuLevel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label><label><input id="garbage" type="checkbox" checked /> お邪魔ぷよあり</label></div><button class="start-button" id="startButton" type="button">対戦開始</button></section>
+    <div class="stage-wrap game-ui"><canvas id="game" width="1120" height="700" aria-label="ぷよぷよ CPU対戦ゲーム"></canvas></div>
+    <div class="help game-ui"><span><strong>PLAYER:</strong> ← → 移動 / ↓ 落下 / Z X 回転 / Space 落とす</span><span><strong>連鎖:</strong> おじゃまぷよを相手へ送ります</span><span><strong>R:</strong> 再スタート</span></div>
   </div>
-
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const statusEl = document.getElementById("status");
-
-    const COLS = 6;
-    const ROWS = 14;
-    const VISIBLE_ROWS = 12;
-    const CELL = 38;
-    const BOARD_X = 220;
-    const BOARD_Y = 72;
-    const DROP_FRAMES = 30;
-
-    const COLORS = ["#ff5d73", "#3c9bff", "#ffd74d", "#58c87b", "#b36df2"];
-
-    const state = {
-      board: [],
-      current: null,
-      next: null,
-      score: 0,
-      chain: 0,
-      gameOver: false,
-      frame: 0,
-      lastClearCount: 0,
-      floatingTextTimer: 0,
-      lockDelay: 0
-    };
-
-    const keysHeld = new Set();
-    const keyOnce = new Set();
-
-    function makeBoard() {
-      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-    }
-
-    function randColor() {
-      return Math.floor(Math.random() * COLORS.length);
-    }
-
-    function makePair() {
-      return {
-        x: 2,
-        y: 1,
-        dx: 0,
-        dy: -1,
-        c1: randColor(),
-        c2: randColor()
-      };
-    }
-
-    function resetGame() {
-      state.board = makeBoard();
-      state.score = 0;
-      state.chain = 0;
-      state.gameOver = false;
-      state.frame = 0;
-      state.lastClearCount = 0;
-      state.floatingTextTimer = 0;
-      state.lockDelay = 0;
-      state.current = makePair();
-      state.next = makePair();
-      statusEl.textContent = "Playing";
-
-      if (!canPlacePair(state.current)) {
-        state.gameOver = true;
-        statusEl.textContent = "Game Over";
-      }
-    }
-
-    function getCells(pair) {
-      return [
-        { x: pair.x, y: pair.y, color: pair.c1 },
-        { x: pair.x + pair.dx, y: pair.y + pair.dy, color: pair.c2 }
-      ];
-    }
-
-    function isInside(x, y) {
-      return x >= 0 && x < COLS && y < ROWS;
-    }
-
-    function canOccupy(x, y) {
-      if (!isInside(x, y)) return false;
-      if (y < 0) return true;
-      return state.board[y][x] === null;
-    }
-
-    function canPlacePair(pair) {
-      return getCells(pair).every((c) => canOccupy(c.x, c.y));
-    }
-
-    function movePair(dx, dy) {
-      const moved = { ...state.current, x: state.current.x + dx, y: state.current.y + dy };
-      if (canPlacePair(moved)) {
-        state.current = moved;
-        return true;
-      }
-      return false;
-    }
-
-    function rotatePair(dir) {
-      const p = state.current;
-      const rotated = { ...p, dx: -p.dy * dir, dy: p.dx * dir };
-      if (canPlacePair(rotated)) {
-        state.current = rotated;
-        return;
-      }
-
-      const kicks = [
-        { x: 1, y: 0 },
-        { x: -1, y: 0 },
-        { x: 0, y: 1 }
-      ];
-      for (const k of kicks) {
-        const kicked = { ...rotated, x: rotated.x + k.x, y: rotated.y + k.y };
-        if (canPlacePair(kicked)) {
-          state.current = kicked;
-          return;
-        }
-      }
-    }
-
-    function placeCurrentPair() {
-      for (const c of getCells(state.current)) {
-        if (c.y < 0) {
-          state.gameOver = true;
-          statusEl.textContent = "Game Over";
-          return;
-        }
-        state.board[c.y][c.x] = c.color;
-      }
-
-      resolveBoard();
-
-      state.current = state.next;
-      state.current.x = 2;
-      state.current.y = 1;
-      state.current.dx = 0;
-      state.current.dy = -1;
-      state.next = makePair();
-
-      if (!canPlacePair(state.current)) {
-        state.gameOver = true;
-        statusEl.textContent = "Game Over";
-      }
-    }
-
-    function applyGravity() {
-      let moved = false;
-      for (let y = ROWS - 2; y >= 0; y -= 1) {
-        for (let x = 0; x < COLS; x += 1) {
-          if (state.board[y][x] !== null && state.board[y + 1][x] === null) {
-            state.board[y + 1][x] = state.board[y][x];
-            state.board[y][x] = null;
-            moved = true;
-          }
-        }
-      }
-      return moved;
-    }
-
-    function collectGroup(startX, startY, visited) {
-      const color = state.board[startY][startX];
-      if (color === null) return [];
-
-      const stack = [{ x: startX, y: startY }];
-      const group = [];
-      visited[startY][startX] = true;
-
-      while (stack.length > 0) {
-        const n = stack.pop();
-        group.push(n);
-
-        const dirs = [
-          { x: 1, y: 0 },
-          { x: -1, y: 0 },
-          { x: 0, y: 1 },
-          { x: 0, y: -1 }
-        ];
-
-        for (const d of dirs) {
-          const nx = n.x + d.x;
-          const ny = n.y + d.y;
-          if (!isInside(nx, ny) || ny < 0) continue;
-          if (visited[ny][nx]) continue;
-          if (state.board[ny][nx] !== color) continue;
-          visited[ny][nx] = true;
-          stack.push({ x: nx, y: ny });
-        }
-      }
-
-      return group;
-    }
-
-    function clearGroups() {
-      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
-      const toClear = [];
-
-      for (let y = 0; y < ROWS; y += 1) {
-        for (let x = 0; x < COLS; x += 1) {
-          if (state.board[y][x] === null || visited[y][x]) continue;
-          const g = collectGroup(x, y, visited);
-          if (g.length >= 4) toClear.push(...g);
-        }
-      }
-
-      for (const c of toClear) {
-        state.board[c.y][c.x] = null;
-      }
-
-      return toClear.length;
-    }
-
-    function resolveBoard() {
-      let chain = 0;
-      let totalCleared = 0;
-
-      while (true) {
-        while (applyGravity()) {
-          // settle all floating blobs before evaluating chains
-        }
-
-        const cleared = clearGroups();
-        if (cleared === 0) break;
-
-        chain += 1;
-        totalCleared += cleared;
-        const chainBonus = chain * chain * 40;
-        const clearBonus = cleared * 12;
-        state.score += clearBonus + chainBonus;
-      }
-
-      state.chain = chain;
-      state.lastClearCount = totalCleared;
-      state.floatingTextTimer = totalCleared > 0 ? 80 : 0;
-      if (chain >= 2) {
-        statusEl.textContent = chain + " Chain";
-      } else {
-        statusEl.textContent = "Playing";
-      }
-    }
-
-    function hardDrop() {
-      if (!state.current || state.gameOver) return;
-      let dropped = 0;
-      while (movePair(0, 1)) dropped += 1;
-      state.score += dropped;
-      placeCurrentPair();
-    }
-
-    function updateInput() {
-      if (state.gameOver) {
-        if (keyOnce.has("r")) resetGame();
-        keyOnce.clear();
-        return;
-      }
-
-      if (keyOnce.has("arrowleft")) movePair(-1, 0);
-      if (keyOnce.has("arrowright")) movePair(1, 0);
-      if (keyOnce.has("z")) rotatePair(-1);
-      if (keyOnce.has("x")) rotatePair(1);
-      if (keyOnce.has(" ")) hardDrop();
-      if (keyOnce.has("r")) resetGame();
-
-      keyOnce.clear();
-    }
-
-    function updateFalling() {
-      if (state.gameOver) return;
-
-      const softDropping = keysHeld.has("arrowdown");
-      const interval = softDropping ? 4 : DROP_FRAMES;
-
-      if (state.frame % interval !== 0) return;
-
-      if (!movePair(0, 1)) {
-        state.lockDelay += 1;
-        if (state.lockDelay >= 2) {
-          state.lockDelay = 0;
-          placeCurrentPair();
-        }
-      } else {
-        state.lockDelay = 0;
-      }
-    }
-
-    function drawRoundedRect(x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
-    }
-
-    function drawBlob(px, py, colorIndex, alpha = 1) {
-      const color = COLORS[colorIndex];
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = color;
-      drawRoundedRect(px + 2, py + 2, CELL - 4, CELL - 4, 12);
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
-      ctx.beginPath();
-      ctx.ellipse(px + CELL * 0.36, py + CELL * 0.34, CELL * 0.14, CELL * 0.12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawBoard() {
-      ctx.fillStyle = "rgba(10, 22, 36, 0.7)";
-      drawRoundedRect(BOARD_X - 14, BOARD_Y - 14, COLS * CELL + 28, VISIBLE_ROWS * CELL + 28, 18);
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(220, 244, 255, 0.12)";
-      for (let y = 0; y < VISIBLE_ROWS; y += 1) {
-        for (let x = 0; x < COLS; x += 1) {
-          ctx.fillRect(BOARD_X + x * CELL, BOARD_Y + y * CELL, CELL - 1, CELL - 1);
-        }
-      }
-
-      const offsetY = ROWS - VISIBLE_ROWS;
-      for (let y = offsetY; y < ROWS; y += 1) {
-        for (let x = 0; x < COLS; x += 1) {
-          const c = state.board[y][x];
-          if (c !== null) {
-            const py = BOARD_Y + (y - offsetY) * CELL;
-            drawBlob(BOARD_X + x * CELL, py, c);
-          }
-        }
-      }
-
-      if (state.current && !state.gameOver) {
-        for (const c of getCells(state.current)) {
-          if (c.y >= offsetY) {
-            const py = BOARD_Y + (c.y - offsetY) * CELL;
-            drawBlob(BOARD_X + c.x * CELL, py, c.color, 0.95);
-          }
-        }
-      }
-    }
-
-    function drawUiPanel() {
-      const panelX = 520;
-      const panelY = 88;
-      const panelW = 250;
-      const panelH = 420;
-
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
-      drawRoundedRect(panelX, panelY, panelW, panelH, 16);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(20,30,42,0.18)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.fillStyle = "#142233";
-      ctx.font = "700 28px Trebuchet MS";
-      ctx.fillText("SCORE", panelX + 20, panelY + 52);
-
-      ctx.font = "800 42px Trebuchet MS";
-      ctx.fillStyle = "#0d5e90";
-      ctx.fillText(String(state.score), panelX + 20, panelY + 102);
-
-      ctx.fillStyle = "#142233";
-      ctx.font = "700 24px Trebuchet MS";
-      ctx.fillText("NEXT", panelX + 20, panelY + 156);
-
-      if (state.next) {
-        const nx = panelX + 36;
-        const ny = panelY + 182;
-        drawBlob(nx, ny, state.next.c1);
-        drawBlob(nx, ny - CELL, state.next.c2);
-      }
-
-      ctx.font = "700 22px Trebuchet MS";
-      ctx.fillStyle = "#142233";
-      ctx.fillText("LAST CHAIN", panelX + 20, panelY + 320);
-
-      ctx.font = "800 34px Trebuchet MS";
-      ctx.fillStyle = state.chain >= 2 ? "#a43f0a" : "#35566f";
-      ctx.fillText(String(state.chain), panelX + 20, panelY + 364);
-
-      if (state.floatingTextTimer > 0 && state.lastClearCount > 0) {
-        const t = state.floatingTextTimer;
-        const lift = (80 - t) * 0.4;
-        ctx.globalAlpha = Math.min(1, t / 18);
-        ctx.font = "700 24px Trebuchet MS";
-        ctx.fillStyle = "#9f2d00";
-        ctx.fillText("+" + state.lastClearCount + " clear", panelX + 20, panelY + 402 - lift);
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    function drawBackground(t) {
-      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      g.addColorStop(0, "#dcf4ff");
-      g.addColorStop(1, "#8dcbe6");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
-      ctx.beginPath();
-      ctx.ellipse(170 + Math.sin(t * 0.00035) * 12, 88, 130, 46, 0, 0, Math.PI * 2);
-      ctx.ellipse(760 + Math.cos(t * 0.00026) * 18, 102, 180, 58, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function drawGameOver() {
-      if (!state.gameOver) return;
-      ctx.fillStyle = "rgba(7, 14, 25, 0.55)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.font = "800 56px Trebuchet MS";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 12);
-      ctx.font = "700 26px Trebuchet MS";
-      ctx.fillText("Press R to Retry", canvas.width / 2, canvas.height / 2 + 34);
-      ctx.textAlign = "left";
-    }
-
-    function update() {
-      state.frame += 1;
-      if (state.floatingTextTimer > 0) state.floatingTextTimer -= 1;
-
-      updateInput();
-      updateFalling();
-    }
-
-    function render(time) {
-      drawBackground(time);
-      drawBoard();
-      drawUiPanel();
-      drawGameOver();
-    }
-
-    function loop(time) {
-      update();
-      render(time);
-      requestAnimationFrame(loop);
-    }
-
-    window.addEventListener("keydown", (e) => {
-      const k = e.key.toLowerCase();
-      if (["arrowleft", "arrowright", "arrowdown", "arrowup", "z", "x", " ", "r"].includes(k)) {
-        e.preventDefault();
-      }
-      if (!keysHeld.has(k)) keyOnce.add(k);
-      keysHeld.add(k);
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keysHeld.delete(e.key.toLowerCase());
-    });
-
-    resetGame();
-    requestAnimationFrame(loop);
+    const COLS = 6, ROWS = 14, VISIBLE_ROWS = 12, CELL = 38, BOARD_Y = 150, DROP_FRAMES = 30, GARBAGE = 5;
+    const COLORS = ["#ff5d73", "#3c9bff", "#ffd74d", "#58c87b", "#b36df2", "#95a3ad"];
+    const player = makeGame("PLAYER"), cpu = makeGame("CPU");
+    const match = { over: false, winner: "" };
+    const effects = [];
+    const settings = { mode: "cpu", cpuLevel: 5, garbage: true };
+    const modeEl = document.getElementById("mode"), cpuLevelEl = document.getElementById("cpuLevel"), garbageEl = document.getElementById("garbage"), startButton = document.getElementById("startButton");
+    const held = new Set(), once = new Set();
+
+    function makeBoard() { return Array.from({ length: ROWS }, () => Array(COLS).fill(null)); }
+    function makeGame(name) { return { name, board: makeBoard(), current: null, next: null, score: 0, chain: 0, lastClear: 0, garbage: 0, frame: 0, lockDelay: 0, aiMove: null, aiWait: 0, gameOver: false }; }
+    function randColor() { return Math.floor(Math.random() * 5); }
+    function makePair() { return { x: 2, y: 1, dx: 0, dy: -1, c1: randColor(), c2: randColor() }; }
+    function cells(pair) { return [{ x: pair.x, y: pair.y, color: pair.c1 }, { x: pair.x + pair.dx, y: pair.y + pair.dy, color: pair.c2 }]; }
+    function inside(x, y) { return x >= 0 && x < COLS && y < ROWS; }
+    function canOccupy(game, x, y) { return inside(x, y) && (y < 0 || game.board[y][x] === null); }
+    function canPlace(game, pair) { return cells(pair).every((c) => canOccupy(game, c.x, c.y)); }
+    function resetGame(game) { game.board = makeBoard(); game.current = makePair(); game.next = makePair(); game.score = 0; game.chain = 0; game.lastClear = 0; game.garbage = 0; game.frame = 0; game.lockDelay = 0; game.aiMove = null; game.aiWait = 0; game.gameOver = !canPlace(game, game.current); }
+    function resetMatch() { resetGame(player); resetGame(cpu); effects.length = 0; match.over = false; match.winner = ""; statusEl.textContent = settings.mode === "cpu" ? "PLAYER VS CPU" : "SOLO PLAY"; }
+    function movePair(game, dx, dy) { const moved = { ...game.current, x: game.current.x + dx, y: game.current.y + dy }; if (!canPlace(game, moved)) return false; game.current = moved; return true; }
+    function rotatePair(game, direction) { const p = game.current; const rotated = { ...p, dx: -p.dy * direction, dy: p.dx * direction }; if (canPlace(game, rotated)) { game.current = rotated; return true; } for (const kick of [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }]) { const kicked = { ...rotated, x: rotated.x + kick.x, y: rotated.y + kick.y }; if (canPlace(game, kicked)) { game.current = kicked; return true; } } return false; }
+    function clearGroup(game, startX, startY, visited) { const color = game.board[startY][startX]; if (color === null || color === GARBAGE) return []; const stack = [{ x: startX, y: startY }], group = []; visited[startY][startX] = true; while (stack.length) { const node = stack.pop(); group.push(node); for (const d of [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }]) { const x = node.x + d.x, y = node.y + d.y; if (inside(x, y) && y >= 0 && !visited[y][x] && game.board[y][x] === color) { visited[y][x] = true; stack.push({ x, y }); } } } return group; }
+    function applyGravity(game) { let moved = false; for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) if (game.board[y][x] !== null && game.board[y + 1][x] === null) { game.board[y + 1][x] = game.board[y][x]; game.board[y][x] = null; moved = true; } return moved; }
+    function clearGroups(game, animate = true, chain = 1) { const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false)), cleared = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (game.board[y][x] !== null && !visited[y][x]) { const group = clearGroup(game, x, y, visited); if (group.length >= 4) cleared.push(...group.map((cell) => ({ ...cell, color: game.board[cell.y][cell.x] }))); } if (animate && cleared.length) spawnFireworks(game, cleared, chain); for (const c of cleared) game.board[c.y][c.x] = null; return cleared.length; }
+    function resolve(game, animate = true) { let chain = 0, total = 0; while (true) { while (applyGravity(game)); const cleared = clearGroups(game, animate, chain + 1); if (!cleared) break; chain++; total += cleared; game.score += cleared * 12 + chain * chain * 40; } game.chain = chain; game.lastClear = total; return { cleared: total, chain }; }
+    function spawnFireworks(game, cleared, chain) { const boardX = game === player ? 120 : 690; const offset = ROWS - VISIBLE_ROWS; const blobs = cleared.filter((cell) => cell.y >= offset).map((cell) => ({ x: boardX + cell.x * CELL, y: BOARD_Y + (cell.y - offset) * CELL, color: cell.color })); const count = Math.min(14, 2 + Math.ceil(cleared.length / 3) + chain * chain); for (let burst = 0; burst < count; burst++) { const centerX = boardX + 12 + Math.random() * (COLS * CELL - 24); const centerY = BOARD_Y + 42 + Math.random() * (VISIBLE_ROWS * CELL - 100); const color = Math.floor(Math.random() * 5); const particles = []; const particleCount = 20 + chain * 12 + Math.floor(cleared.length * 1.5); for (let i = 0; i < particleCount; i++) { const angle = Math.PI * 2 * i / particleCount + Math.random() * .16; const speed = 1.4 + Math.random() * (2.4 + chain * .65); particles.push({ x: centerX, y: centerY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 28 + Math.random() * 18, size: 1.5 + Math.random() * 2.5 }); } effects.push({ x: centerX, y: centerY, color, blobs, particles, life: 58, flash: 1 }); } }
+    function updateEffects() { for (let i = effects.length - 1; i >= 0; i--) { const effect = effects[i]; effect.life--; effect.flash *= .88; for (const particle of effect.particles) { particle.x += particle.vx; particle.y += particle.vy; particle.vx *= .97; particle.vy = particle.vy * .97 + .045; particle.life--; } if (effect.life <= 0) effects.splice(i, 1); } }
+    function drawEffects() { ctx.save(); ctx.globalCompositeOperation = "lighter"; for (const effect of effects) { const alpha = Math.max(0, effect.life / 58); if (effect.life > 22 && Math.floor(effect.life / 4) % 2 === 0) for (const blob of effect.blobs) drawBlob(blob.x, blob.y, blob.color, .9); if (effect.flash > .05) { ctx.fillStyle = `rgba(255,255,255,${effect.flash * .45})`; ctx.beginPath(); ctx.arc(effect.x, effect.y, 24 + (1 - alpha) * 28, 0, Math.PI * 2); ctx.fill(); } if (effect.life <= 42) for (const particle of effect.particles) { if (particle.life <= 0) continue; const particleAlpha = Math.min(1, particle.life / 12) * alpha; ctx.fillStyle = `${COLORS[effect.color]}`; ctx.globalAlpha = particleAlpha; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(particle.x, particle.y); ctx.lineTo(particle.x - particle.vx * 3, particle.y - particle.vy * 3); ctx.stroke(); } } ctx.restore(); }
+    function addGarbage(game) { while (game.garbage > 0) { let placed = false; for (let x = 0; x < COLS && game.garbage > 0; x++) for (let y = ROWS - 1; y >= 0 && game.garbage > 0; y--) if (game.board[y][x] === null) { game.board[y][x] = GARBAGE; game.garbage--; placed = true; break; } if (!placed) { game.gameOver = true; break; } } }
+    function placePair(game, animate = true) { for (const c of cells(game.current)) { if (c.y < 0) { game.gameOver = true; return { cleared: 0, chain: 0 }; } game.board[c.y][c.x] = c.color; } const result = resolve(game, animate); game.current = game.next; game.current.x = 2; game.current.y = 1; game.current.dx = 0; game.current.dy = -1; game.next = makePair(); addGarbage(game); if (!canPlace(game, game.current)) game.gameOver = true; return result; }
+    function sendGarbage(to, result) { if (settings.garbage && settings.mode === "cpu") to.garbage += Math.max(0, Math.floor((result.cleared + result.chain * 2) / 4)); }
+    function copyGame(game) { return { board: game.board.map((row) => [...row]), current: { ...game.current }, next: game.next, score: 0, chain: 0, garbage: 0 }; }
+    function simulate(game, x, rotation) { const test = copyGame(game); test.current.x = x; test.current.y = 1; test.current.dx = [0, 1, 0, -1][rotation]; test.current.dy = [-1, 0, 1, 0][rotation]; if (!canPlace(test, test.current)) return null; while (movePair(test, 0, 1)); const result = placePair(test, false); let height = 0, holes = 0; for (let col = 0; col < COLS; col++) { let found = false; for (let y = 0; y < ROWS; y++) { if (test.board[y][col] !== null) { found = true; height += ROWS - y; } else if (found) holes++; } } return { x, rotation, value: result.cleared * 100 + result.chain * 500 - height * 2 - holes * 30 }; }
+    function chooseCpuMove(game) { let best = null; const noise = (10 - settings.cpuLevel) * 35; for (let rotation = 0; rotation < 4; rotation++) for (let x = 0; x < COLS; x++) { const candidate = simulate(game, x, rotation); if (candidate) { candidate.value += Math.random() * noise; if (!best || candidate.value > best.value) best = candidate; } } return best || { x: 2, rotation: 0 }; }
+    function updateCpu() { if (settings.mode !== "cpu" || cpu.gameOver || match.over) return; if (!cpu.aiMove) { cpu.aiMove = chooseCpuMove(cpu); cpu.aiWait = 90 + (9 - settings.cpuLevel) * 8; } if (cpu.aiWait > 0) { cpu.aiWait--; return; } const target = cpu.aiMove; let currentRotation = [0, 1, 2, 3].findIndex((r) => cpu.current.dx === [0, 1, 0, -1][r] && cpu.current.dy === [-1, 0, 1, 0][r]); if (currentRotation < 0) currentRotation = 0; if (currentRotation !== target.rotation) { rotatePair(cpu, 1); return; } if (cpu.current.x < target.x) { movePair(cpu, 1, 0); return; } if (cpu.current.x > target.x) { movePair(cpu, -1, 0); return; } while (movePair(cpu, 0, 1)); const result = placePair(cpu); sendGarbage(player, result); cpu.aiMove = null; }
+    function updatePlayer() { if (player.gameOver || match.over) return; if (once.has("arrowleft")) movePair(player, -1, 0); if (once.has("arrowright")) movePair(player, 1, 0); if (once.has("z")) rotatePair(player, -1); if (once.has("x")) rotatePair(player, 1); if (once.has(" ")) { while (movePair(player, 0, 1)); const result = placePair(player); sendGarbage(cpu, result); } const interval = held.has("arrowdown") ? 4 : DROP_FRAMES; if (player.frame % interval === 0 && !movePair(player, 0, 1)) { player.lockDelay++; if (player.lockDelay >= 2) { player.lockDelay = 0; const result = placePair(player); sendGarbage(cpu, result); } } else if (player.current) player.lockDelay = 0; player.frame++; }
+    function updateMatch() { const ended = settings.mode === "cpu" ? player.gameOver || cpu.gameOver : player.gameOver; if (!match.over && ended) { match.over = true; match.winner = player.gameOver ? (settings.mode === "cpu" ? "CPU" : "GAME") : "PLAYER"; statusEl.textContent = match.winner + " WIN"; } }
+    function roundedRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
+    function drawBlob(x, y, color, alpha = 1) { ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = COLORS[color]; roundedRect(x + 2, y + 2, CELL - 4, CELL - 4, 12); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(x + CELL * .36, y + CELL * .34, CELL * .14, CELL * .12, 0, 0, Math.PI * 2); ctx.fill(); if (color !== GARBAGE) { ctx.fillStyle = "#17202b"; ctx.strokeStyle = "#17202b"; ctx.lineWidth = 2; ctx.beginPath(); if (color === 0) { ctx.moveTo(x + 9, y + 17); ctx.lineTo(x + 16, y + 19); ctx.moveTo(x + 22, y + 19); ctx.lineTo(x + 29, y + 17); } else if (color === 1) { ctx.moveTo(x + 9, y + 19); ctx.quadraticCurveTo(x + 13, y + 16, x + 17, y + 19); ctx.moveTo(x + 21, y + 19); ctx.quadraticCurveTo(x + 25, y + 16, x + 29, y + 19); } else { ctx.arc(x + 13, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.arc(x + 25, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); } ctx.stroke(); if (color !== 1) { ctx.fillStyle = "#17202b"; ctx.beginPath(); ctx.arc(x + 13, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.arc(x + 25, y + 20, color === 2 ? 3.8 : 3.2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x + 12, y + 19, 1, 0, Math.PI * 2); ctx.arc(x + 24, y + 19, 1, 0, Math.PI * 2); ctx.fill(); } ctx.beginPath(); if (color === 0) { ctx.arc(x + 19, y + 28, 5, Math.PI + .2, Math.PI * 2 - .2); } else if (color === 1) { ctx.moveTo(x + 15, y + 27); ctx.lineTo(x + 23, y + 27); } else if (color === 2) { ctx.arc(x + 19, y + 24, 6, 0.1, Math.PI - .1); } else if (color === 3) { ctx.arc(x + 19, y + 27, 4, 0, Math.PI * 2); } else { ctx.arc(x + 19, y + 26, 5, Math.PI + .15, Math.PI * 2 - .15); } ctx.stroke(); } ctx.restore(); }
+    function drawBoard(game, x) { const boardW = COLS * CELL; ctx.fillStyle = "rgba(10,22,36,.75)"; roundedRect(x - 14, BOARD_Y - 14, boardW + 28, VISIBLE_ROWS * CELL + 28, 18); ctx.fill(); ctx.fillStyle = "rgba(220,244,255,.14)"; for (let y = 0; y < VISIBLE_ROWS; y++) for (let col = 0; col < COLS; col++) ctx.fillRect(x + col * CELL, BOARD_Y + y * CELL, CELL - 1, CELL - 1); const offset = ROWS - VISIBLE_ROWS; for (let y = offset; y < ROWS; y++) for (let col = 0; col < COLS; col++) if (game.board[y][col] !== null) drawBlob(x + col * CELL, BOARD_Y + (y - offset) * CELL, game.board[y][col]); if (game.current && !game.gameOver) for (const c of cells(game.current)) if (c.y >= offset) drawBlob(x + c.x * CELL, BOARD_Y + (c.y - offset) * CELL, c.color, .92); }
+    function drawPanel(game, x) { ctx.fillStyle = "#17202b"; ctx.font = "800 24px Trebuchet MS"; ctx.fillText(game.name, x, 44); ctx.font = "700 18px Trebuchet MS"; ctx.fillText("SCORE " + game.score, x, 72); ctx.fillText("CHAIN " + game.chain, x, 98); ctx.font = "700 16px Trebuchet MS"; ctx.fillText("GARBAGE " + game.garbage, x, 124); ctx.fillText("NEXT", x + 110, 70); if (game.next) { drawBlob(x + 112, 78, game.next.c2, .95); drawBlob(x + 112, 116, game.next.c1, .95); } }
+    function render(time) { const g = ctx.createLinearGradient(0, 0, 0, canvas.height); g.addColorStop(0, "#dcf4ff"); g.addColorStop(1, "#8dcbe6"); ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.beginPath(); ctx.ellipse(180 + Math.sin(time * .0003) * 12, 86, 140, 42, 0, 0, Math.PI * 2); ctx.ellipse(930 + Math.cos(time * .00025) * 18, 96, 180, 52, 0, 0, Math.PI * 2); ctx.fill(); const boardX = settings.mode === "cpu" ? 120 : 330; drawPanel(player, boardX); drawBoard(player, boardX); if (settings.mode === "cpu") { drawPanel(cpu, 690); drawBoard(cpu, 690); } drawEffects(); ctx.fillStyle = "#f1f8ff"; ctx.fillRect(0, 620, canvas.width, 80); if (match.over) { ctx.fillStyle = "rgba(7,14,25,.58)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "800 54px Trebuchet MS"; ctx.fillText(match.winner + " WIN", canvas.width / 2, 340); ctx.font = "700 24px Trebuchet MS"; ctx.fillText("R を押して再戦", canvas.width / 2, 380); ctx.textAlign = "left"; } }
+    function loop(time) { updatePlayer(); updateCpu(); updateMatch(); updateEffects(); once.clear(); render(time); requestAnimationFrame(loop); }
+    window.addEventListener("keydown", (event) => { const key = event.key.toLowerCase(); if (["arrowleft", "arrowright", "arrowdown", "z", "x", " ", "r"].includes(key)) event.preventDefault(); if (!held.has(key)) once.add(key); held.add(key); if (key === "r") resetMatch(); });
+    window.addEventListener("keyup", (event) => held.delete(event.key.toLowerCase()));
+    modeEl.addEventListener("change", () => { settings.mode = modeEl.value; resetMatch(); });
+    cpuLevelEl.addEventListener("change", () => { settings.cpuLevel = Number(cpuLevelEl.value); resetMatch(); });
+    garbageEl.addEventListener("change", () => { settings.garbage = garbageEl.checked; resetMatch(); });
+    startButton.addEventListener("click", () => { document.body.classList.add("started"); resetMatch(); });
+    resetMatch(); requestAnimationFrame(loop);
   </script>
 </body>
 </html>
