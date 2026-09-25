@@ -3,25 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Next Game Prototype</title>
+  <title>王道 | 7x7 ボードゲーム</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <h1>Next Game Prototype</h1>
-    <p>WASD / Arrow keys support ready</p>
-  </header>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">TWO KINGS / ONE BOARD</p>
+        <h1>王道</h1>
+        <p class="subtitle">王を王で追い詰める、7×7の対戦ゲーム</p>
+      </div>
+      <button class="reset-button" id="resetButton" type="button">↻ 新しい対局</button>
+    </header>
 
-  <main class="stage-wrap">
-    <canvas id="game" width="1280" height="720" aria-label="game canvas"></canvas>
+    <section class="game-layout">
+      <aside class="side-panel player-panel player-one" id="playerOnePanel">
+        <div class="player-heading"><span class="player-mark"></span><span>PLAYER 1</span></div>
+        <div class="king-label">青の王</div>
+        <div class="pawn-count"><strong id="playerOnePawns">15</strong><span>/ 15 兵</span></div>
+        <p>自分の兵は王が<br />飛び越えられます。</p>
+      </aside>
+
+      <section class="board-area">
+        <div class="turn-banner" id="turnBanner">PLAYER 1 の番</div>
+        <div class="board-frame">
+          <div class="board" id="board" role="grid" aria-label="7×7のゲーム盤"></div>
+        </div>
+        <div class="action-bar">
+          <button class="action-button selected" id="moveMode" type="button">♔ 王を動かす</button>
+          <button class="action-button" id="placeMode" type="button">♟ 兵を置く</button>
+          <span class="hint" id="hint">王をクリックして、移動先を選択</span>
+        </div>
+      </section>
+
+      <aside class="side-panel player-panel player-two" id="playerTwoPanel">
+        <div class="player-heading"><span class="player-mark"></span><span>PLAYER 2</span></div>
+        <div class="king-label">赤の王</div>
+        <div class="pawn-count"><strong id="playerTwoPawns">15</strong><span>/ 15 兵</span></div>
+        <p>相手の兵は王の<br />進路をふさぎます。</p>
+      </aside>
+    </section>
+
+    <section class="rules">
+      <div><span class="rule-number">01</span><strong>王を動かす</strong><span>周囲8方向の1マスへ移動。</span></div>
+      <div><span class="rule-number">02</span><strong>兵を置く</strong><span>空いている場所へ、1ターンに1枚。</span></div>
+      <div><span class="rule-number">03</span><strong>勝利条件</strong><span>相手の王のマスへ入ったら勝ち。</span></div>
+    </section>
+    <p class="status" id="status" aria-live="polite">PLAYER 1 が王を動かす番です。</p>
   </main>
 
-  <footer class="help">
-    <span>Move: A D or ArrowLeft ArrowRight</span>
-    <span>Jump: W or ArrowUp</span>
-    <span>Action: Space</span>
-    <span>Reset: R</span>
-  </footer>
+  <div class="victory-overlay" id="victoryOverlay" aria-hidden="true">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="victory-card">
+      <div class="victory-crown">♛</div>
+      <p class="victory-kicker">CHECKMATE</p>
+      <h2 id="victoryTitle">PLAYER 1 勝利！</h2>
+      <p>相手の王を捕まえました</p>
+      <button class="reset-button" id="victoryReset" type="button">もう一度遊ぶ</button>
+    </div>
+  </div>
 
   <script src="./game.js"></script>
 </body>

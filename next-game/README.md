@@ -1,23 +1,19 @@
-# Next Game Environment
+# 王道
 
-## Goal
+7×7の盤上で、2人の王が相手の王を追うローカル対戦ゲームです。
 
-Reusable starter for the next 2D action game prototype.
+## 遊び方
 
-## Structure
+- 自分のターンに「王を動かす」か「兵を置く」を選びます。
+- 王は縦・横・斜めの8方向へ、周囲1マスだけ移動できます。
+- 自分の兵は王が飛び越せます。相手の兵は進路をふさぎます。
+- 兵は1人15枚まで置けます。兵は移動も攻撃もできません。
+- 兵は自分・相手を問わず、ほかの兵と隣り合う場所には置けません。
+- 相手の王がいるマスへ自分の王が入ると勝利です。
+- 勝利時には勝利画面と紙吹雪の演出が表示されます。
 
-- index.html: main page and UI shell
-- styles.css: layout and visuals
-- game.js: input/update/draw loop scaffold
-- assets/: place images, sounds, and sprites
+PLAYER 1の王は下段中央、PLAYER 2の王は上段中央から始まります。
 
-## Run
+## 起動
 
-Open index.html in a browser.
-
-## Next Steps
-
-1. Replace player box with sprite animation.
-2. Add enemy manager and hit detection.
-3. Add scene state (title, in-game, result).
-4. Split constants to a config module if project grows.
+`index.html` をブラウザで開いてください。

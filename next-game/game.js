@@ -1,112 +1,161 @@
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const SIZE = 7;
+const MAX_PAWNS = 15;
+const boardElement = document.getElementById("board");
+const statusElement = document.getElementById("status");
+const turnBanner = document.getElementById("turnBanner");
+const hintElement = document.getElementById("hint");
+const moveModeButton = document.getElementById("moveMode");
+const placeModeButton = document.getElementById("placeMode");
+const resetButton = document.getElementById("resetButton");
+const victoryOverlay = document.getElementById("victoryOverlay");
+const victoryTitle = document.getElementById("victoryTitle");
+const confettiElement = document.getElementById("confetti");
+const victoryReset = document.getElementById("victoryReset");
+const pawnCountElements = [document.getElementById("playerOnePawns"), document.getElementById("playerTwoPawns")];
+const playerPanels = [document.getElementById("playerOnePanel"), document.getElementById("playerTwoPanel")];
 
-const world = {
-  width: canvas.width,
-  height: canvas.height,
-  gravity: 0.55,
-  floorY: 620
-};
+let state;
 
-const keys = new Set();
-window.addEventListener("keydown", (e) => {
-  keys.add(e.key.toLowerCase());
-  if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "r"].includes(e.key.toLowerCase())) {
-    e.preventDefault();
+function makeState() {
+  return {
+    board: Array.from({ length: SIZE }, () => Array(SIZE).fill(null)),
+    kings: [{ row: SIZE - 1, col: Math.floor(SIZE / 2) }, { row: 0, col: Math.floor(SIZE / 2) }],
+    pawns: [[], []],
+    currentPlayer: 0,
+    mode: "move",
+    selected: null,
+    winner: null
+  };
+}
+
+function resetGame() {
+  state = makeState();
+  victoryOverlay.classList.remove("show");
+  victoryOverlay.setAttribute("aria-hidden", "true");
+  confettiElement.replaceChildren();
+  render();
+}
+
+function occupant(row, col) {
+  for (let player = 0; player < 2; player++) {
+    if (state.kings[player].row === row && state.kings[player].col === col) return { type: "king", player };
+    if (state.pawns[player].some((pawn) => pawn.row === row && pawn.col === col)) return { type: "pawn", player };
   }
-});
-window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
-
-const player = {
-  x: 140,
-  y: 120,
-  w: 46,
-  h: 64,
-  vx: 0,
-  vy: 0,
-  speed: 0.95,
-  jumpPower: 12,
-  grounded: false,
-  color: "#1d6fa3"
-};
-
-function resetPlayer() {
-  player.x = 140;
-  player.y = 120;
-  player.vx = 0;
-  player.vy = 0;
-  player.grounded = false;
+  return null;
 }
 
-function readInput() {
-  const left = keys.has("a") || keys.has("arrowleft");
-  const right = keys.has("d") || keys.has("arrowright");
-  const jump = keys.has("w") || keys.has("arrowup");
+function canMoveKing(from, to, player) {
+  if (to.row < 0 || to.row >= SIZE || to.col < 0 || to.col >= SIZE || (from.row === to.row && from.col === to.col)) return false;
+  if (Math.abs(to.row - from.row) > 1 || Math.abs(to.col - from.col) > 1) return false;
+  const destination = occupant(to.row, to.col);
+  return !destination || (destination.type === "king" && destination.player !== player);
+}
 
-  if (left) player.vx -= player.speed;
-  if (right) player.vx += player.speed;
+function isValidDestination(row, col) {
+  if (state.mode !== "move" || !state.selected) return false;
+  return canMoveKing(state.selected, { row, col }, state.currentPlayer);
+}
 
-  if (jump && !player._jumpHeld && player.grounded) {
-    player.vy = -player.jumpPower;
-    player.grounded = false;
+function endTurn() {
+  state.selected = null;
+  state.currentPlayer = 1 - state.currentPlayer;
+}
+
+function moveKing(row, col) {
+  const player = state.currentPlayer;
+  const target = occupant(row, col);
+  state.kings[player] = { row, col };
+  if (target && target.type === "king" && target.player !== player) {
+    state.winner = player;
+    showVictory(player);
   }
-  player._jumpHeld = jump;
-
-  if (keys.has("r")) resetPlayer();
+  if (state.winner === null) endTurn();
+  render();
 }
 
-function update() {
-  readInput();
+function hasAdjacentPawn(row, col) {
+  return state.pawns.some((pawns) => pawns.some((pawn) => Math.abs(pawn.row - row) <= 1 && Math.abs(pawn.col - col) <= 1));
+}
 
-  player.vy += world.gravity;
-  player.vx *= player.grounded ? 0.78 : 0.93;
-
-  player.x += player.vx;
-  player.y += player.vy;
-
-  if (player.y + player.h >= world.floorY) {
-    player.y = world.floorY - player.h;
-    player.vy = 0;
-    player.grounded = true;
+function showVictory(player) {
+  victoryTitle.textContent = `PLAYER ${player + 1} 勝利！`;
+  confettiElement.replaceChildren();
+  const colors = ["#2068a5", "#c34d48", "#f7d36b", "#58a878", "#f5f0df"];
+  for (let index = 0; index < 70; index++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.setProperty("--drift", `${(Math.random() - .5) * 260}px`);
+    piece.style.setProperty("--delay", `${Math.random() * .55}s`);
+    piece.style.setProperty("--fall-time", `${1.8 + Math.random() * 1.5}s`);
+    piece.style.setProperty("--confetti-color", colors[index % colors.length]);
+    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    confettiElement.append(piece);
   }
+  victoryOverlay.classList.add("show");
+  victoryOverlay.setAttribute("aria-hidden", "false");
 }
 
-function drawBackground(t) {
-  const g = ctx.createLinearGradient(0, 0, 0, world.height);
-  g.addColorStop(0, "#cce7ff");
-  g.addColorStop(1, "#8ecae6");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, world.width, world.height);
-
-  ctx.fillStyle = "#eff7ff";
-  ctx.beginPath();
-  ctx.ellipse(260 + Math.sin(t * 0.0003) * 20, 120, 180, 70, 0, 0, Math.PI * 2);
-  ctx.ellipse(950 + Math.cos(t * 0.00025) * 24, 100, 220, 80, 0, 0, Math.PI * 2);
-  ctx.fill();
+function placePawn(row, col) {
+  const player = state.currentPlayer;
+  if (state.pawns[player].length >= MAX_PAWNS || occupant(row, col)) return;
+  if (hasAdjacentPawn(row, col)) {
+    statusElement.textContent = "兵は、ほかの兵と隣り合って置けません。";
+    return;
+  }
+  state.pawns[player].push({ row, col });
+  endTurn();
+  render();
 }
 
-function drawStage() {
-  ctx.fillStyle = "#f1f8ff";
-  ctx.fillRect(0, world.floorY, world.width, world.height - world.floorY);
-  ctx.fillStyle = "#7cb09f";
-  ctx.fillRect(0, world.floorY + 8, world.width, world.height - world.floorY);
+function handleCellClick(row, col) {
+  if (state.winner) return;
+  if (state.mode === "place") { placePawn(row, col); return; }
+  const currentKing = state.kings[state.currentPlayer];
+  if (!state.selected && row === currentKing.row && col === currentKing.col) {
+    state.selected = { row, col }; render(); return;
+  }
+  if (state.selected && isValidDestination(row, col)) { moveKing(row, col); return; }
+  if (row === currentKing.row && col === currentKing.col) { state.selected = { row, col }; render(); }
 }
 
-function drawPlayer() {
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-
-  ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-  ctx.fillRect(player.x, player.y + player.h - 8, player.w, 8);
+function render() {
+  boardElement.replaceChildren();
+  for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) {
+    const cell = document.createElement("button");
+    cell.className = "cell";
+    cell.type = "button";
+    cell.setAttribute("role", "gridcell");
+    cell.setAttribute("aria-label", `${row + 1}行 ${col + 1}列`);
+    if (state.selected && state.selected.row === row && state.selected.col === col) cell.classList.add("selected");
+    if (isValidDestination(row, col)) cell.classList.add("valid");
+    const piece = occupant(row, col);
+    if (piece) {
+      const pieceElement = document.createElement("span");
+      pieceElement.className = `piece ${piece.type} ${piece.player === 0 ? "blue" : "red"}`;
+      pieceElement.textContent = piece.type === "king" ? "王" : "兵";
+      cell.append(pieceElement);
+    }
+    cell.addEventListener("click", () => handleCellClick(row, col));
+    boardElement.append(cell);
+  }
+  const player = state.currentPlayer;
+  const label = player === 0 ? "PLAYER 1" : "PLAYER 2";
+  turnBanner.textContent = state.winner === null ? `${label} の番` : `PLAYER ${state.winner + 1} の勝利`;
+  turnBanner.style.color = player === 0 ? "var(--blue)" : "var(--red)";
+  statusElement.textContent = state.winner === null ? `${label} が${state.mode === "move" ? "王を動かす" : "兵を置く"}番です。` : `王を取りました。PLAYER ${state.winner + 1} の勝ちです。`;
+  hintElement.textContent = state.mode === "move" ? (state.selected ? "青い枠の周囲1マスへ移動できます" : "王をクリックして、移動先を選択") : "空いているマスをクリックして兵を配置";
+  moveModeButton.classList.toggle("selected", state.mode === "move");
+  placeModeButton.classList.toggle("selected", state.mode === "place");
+  placeModeButton.disabled = state.pawns[player].length >= MAX_PAWNS;
+  pawnCountElements.forEach((element, index) => { element.textContent = MAX_PAWNS - state.pawns[index].length; });
+  playerPanels.forEach((panel, index) => panel.classList.toggle("active", state.winner === null && index === player));
 }
 
-function frame(t) {
-  update();
-  drawBackground(t);
-  drawStage();
-  drawPlayer();
-  requestAnimationFrame(frame);
-}
+moveModeButton.addEventListener("click", () => { if (!state.winner) { state.mode = "move"; state.selected = null; render(); } });
+placeModeButton.addEventListener("click", () => { if (!state.winner && state.pawns[state.currentPlayer].length < MAX_PAWNS) { state.mode = "place"; state.selected = null; render(); } });
+resetButton.addEventListener("click", resetGame);
+victoryReset.addEventListener("click", resetGame);
+window.addEventListener("keydown", (event) => { if (event.key.toLowerCase() === "r") resetGame(); });
 
-resetPlayer();
-requestAnimationFrame(frame);
+resetGame();
