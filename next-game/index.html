@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>王道 | 7x7 ボードゲーム</title>
+  <title>王道 | 8x8 ボードゲーム</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -12,7 +12,29 @@
       <div>
         <p class="eyebrow">TWO KINGS / ONE BOARD</p>
         <h1>王道</h1>
-        <p class="subtitle">王を王で追い詰める、7×7の対戦ゲーム</p>
+        <p class="subtitle">王を王で追い詰める、8×8の対戦ゲーム</p>
+      </div>
+      <div class="match-settings">
+        <label for="opponentMode">対戦相手
+          <select id="opponentMode">
+            <option value="human">2人対戦</option>
+            <option value="cpu">CPU対戦</option>
+          </select>
+        </label>
+        <label for="cpuLevel">CPUレベル
+          <select id="cpuLevel" disabled>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </label>
       </div>
       <button class="reset-button" id="resetButton" type="button">↻ 新しい対局</button>
     </header>
@@ -28,7 +50,7 @@
       <section class="board-area">
         <div class="turn-banner" id="turnBanner">PLAYER 1 の番</div>
         <div class="board-frame">
-          <div class="board" id="board" role="grid" aria-label="7×7のゲーム盤"></div>
+          <div class="board" id="board" role="grid" aria-label="8×8のゲーム盤"></div>
         </div>
         <div class="action-bar">
           <button class="action-button selected" id="moveMode" type="button">♔ 王を動かす</button>
@@ -38,7 +60,7 @@
       </section>
 
       <aside class="side-panel player-panel player-two" id="playerTwoPanel">
-        <div class="player-heading"><span class="player-mark"></span><span>PLAYER 2</span></div>
+        <div class="player-heading"><span class="player-mark"></span><span id="playerTwoName">PLAYER 2</span></div>
         <div class="king-label">赤の王</div>
         <div class="pawn-count"><strong id="playerTwoPawns">15</strong><span>/ 15 兵</span></div>
         <p>相手の兵は王の<br />進路をふさぎます。</p>
@@ -46,8 +68,8 @@
     </section>
 
     <section class="rules">
-      <div><span class="rule-number">01</span><strong>王を動かす</strong><span>周囲8方向の1マスへ移動。</span></div>
-      <div><span class="rule-number">02</span><strong>兵を置く</strong><span>空いている場所へ、1ターンに1枚。</span></div>
+      <div><span class="rule-number">01</span><strong>王を動かす</strong><span>周囲1マスへ移動。隣の自分の兵を飛び越えて2マス進めます。</span></div>
+      <div><span class="rule-number">02</span><strong>兵を置く</strong><span>1ターンに1枚。同じ行・列に各3個まで。隣り合ってもOK。</span></div>
       <div><span class="rule-number">03</span><strong>勝利条件</strong><span>相手の王のマスへ入ったら勝ち。</span></div>
     </section>
     <p class="status" id="status" aria-live="polite">PLAYER 1 が王を動かす番です。</p>

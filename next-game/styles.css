@@ -14,6 +14,10 @@ body {
 
 .app { width: min(1360px, 100%); margin: 0 auto; }
 .topbar { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.match-settings { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
+.match-settings label { display: grid; gap: 5px; color: var(--muted); font: 700 .7rem "Trebuchet MS", sans-serif; }
+.match-settings select { min-height: 36px; border: 1px solid var(--line); border-radius: 3px; padding: 6px 24px 6px 9px; color: var(--ink); background: rgba(255,255,255,.65); font: 700 .78rem "Trebuchet MS", sans-serif; }
+.match-settings select:disabled { opacity: .5; }
 .eyebrow { margin: 0 0 4px; color: var(--red); font: 700 .72rem/1.2 "Trebuchet MS", sans-serif; letter-spacing: .18em; }
 .topbar h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.8rem); line-height: .9; letter-spacing: .05em; }
 .subtitle { margin: 12px 0 0; color: var(--muted); font-size: .95rem; }
@@ -33,7 +37,7 @@ body {
 .board-area { min-width: 0; }
 .turn-banner { margin-bottom: 10px; text-align: center; color: var(--blue); font: 700 .86rem "Trebuchet MS", sans-serif; letter-spacing: .09em; }
 .board-frame { padding: 12px; background: var(--board); box-shadow: 0 15px 30px rgba(60, 48, 29, .18); border: 1px solid #bba77f; }
-.board { display: grid; grid-template-columns: repeat(7, 1fr); aspect-ratio: 1; border: 2px solid #8f7952; background: #a88f62; }
+.board { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 1; border: 2px solid #8f7952; background: #a88f62; }
 .cell { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(105, 82, 44, .24); background: var(--square); cursor: pointer; }
 .cell:nth-child(odd) { background: #e6d2aa; }
 .cell:hover { background: #fff0c9; }
@@ -69,6 +73,6 @@ body {
 @keyframes confettiFall { 0% { opacity: 1; transform: translate3d(0, -10vh, 0) rotate(0); } 100% { opacity: .95; transform: translate3d(var(--drift), 115vh, 0) rotate(720deg); } }
 
 @media (max-width: 760px) {
-  body { padding: 16px 10px; }.topbar { align-items: start; }.subtitle { font-size: .8rem; }.reset-button { white-space: nowrap; }
+  body { padding: 16px 10px; }.topbar { align-items: start; flex-wrap: wrap; }.subtitle { font-size: .8rem; }.reset-button { white-space: nowrap; }.match-settings { order: 3; width: 100%; }
   .game-layout { grid-template-columns: 1fr; gap: 10px; padding-top: 20px; }.board-area { grid-row: 1; }.side-panel { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 4px 2px; }.side-panel .king-label, .side-panel p { display: none; }.pawn-count { margin: 0; }.player-two { order: 3; }.rules { grid-template-columns: 1fr; }.rules div { padding: 9px 10px; }
 }
