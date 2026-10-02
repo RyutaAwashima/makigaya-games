@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f1e7" />
+  <title>まきがやゲームズ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202721;
+      --paper: #f4f1e7;
+      --line: rgba(32, 39, 33, .22);
+      --green: #176d55;
+      --red: #d74a36;
+      --yellow: #f4c84b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(32, 39, 33, .1) .8px, transparent .8px);
+      background-size: 14px 14px;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    }
+
+    .page {
+      width: min(1040px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 54px 0 36px;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .brand {
+      margin: 0;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .edition {
+      margin: 0;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 24px;
+      padding: 52px 0 36px;
+    }
+
+    .intro h1 {
+      max-width: 700px;
+      margin: 0;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: clamp(2.6rem, 8vw, 5.6rem);
+      line-height: 1.08;
+    }
+
+    .intro p {
+      max-width: 245px;
+      margin: 0 0 4px;
+      color: #536057;
+      font-size: .95rem;
+      line-height: 1.8;
+    }
+
+    .game-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-top: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .game-link {
+      position: relative;
+      display: flex;
+      min-height: 310px;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 24px 28px 26px;
+      color: var(--ink);
+      text-decoration: none;
+      background: rgba(255, 255, 255, .48);
+      transition: background-color .2s ease, transform .2s ease;
+    }
+
+    .game-link + .game-link { border-left: 2px solid var(--ink); }
+    .game-link:hover { z-index: 1; background: #fffdf6; transform: translateY(-4px); }
+    .game-link:focus-visible { z-index: 2; outline: 4px solid var(--green); outline-offset: -5px; }
+
+    .game-top, .game-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .game-number, .game-kind {
+      margin: 0;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+    }
+
+    .game-art {
+      position: absolute;
+      top: 70px;
+      right: 24px;
+      display: grid;
+      width: 122px;
+      height: 122px;
+      place-items: center;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      font-size: 3.6rem;
+      line-height: 1;
+      transform: rotate(-8deg);
+    }
+
+    .king .game-art { color: #fff; background: var(--green); box-shadow: 7px 7px 0 var(--yellow); }
+    .puyo .game-art { color: #fff; background: var(--red); box-shadow: 7px 7px 0 #5c9bb2; }
+
+    .game-copy { position: relative; z-index: 1; max-width: 75%; }
+    .game-copy h2 { margin: 0 0 8px; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: 2.1rem; }
+    .game-copy p { margin: 0; color: #536057; font-size: .9rem; line-height: 1.7; }
+
+    .play-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .88rem;
+      font-weight: 800;
+    }
+
+    .arrow { font-size: 1.35rem; transition: transform .2s ease; }
+    .game-link:hover .arrow { transform: translateX(5px); }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 16px;
+      color: #536057;
+      font-size: .75rem;
+    }
+
+    footer p { margin: 0; }
+
+    @media (max-width: 680px) {
+      .page { width: min(100% - 28px, 520px); padding-top: 28px; }
+      .intro { grid-template-columns: 1fr; gap: 14px; padding: 38px 0 26px; }
+      .intro p { max-width: 320px; }
+      .game-list { grid-template-columns: 1fr; }
+      .game-link { min-height: 260px; padding: 20px; }
+      .game-link + .game-link { border-top: 2px solid var(--ink); border-left: 0; }
+      .game-art { top: 56px; right: 20px; width: 96px; height: 96px; font-size: 2.8rem; }
+      .game-copy { max-width: 78%; }
+      .game-copy h2 { font-size: 1.75rem; }
+      footer { flex-wrap: wrap; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <p class="brand">まきがやゲームズ</p>
+      <p class="edition">PLAYABLE GAMES / 02</p>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">今日は、<br />どのゲームで遊ぶ？</h1>
+      <p>気になるタイトルを選んで、すぐにプレイ。</p>
+    </section>
+
+    <nav class="game-list" aria-label="ゲーム一覧">
+      <a class="game-link king" href="./next-game/index.html">
+        <div class="game-top">
+          <p class="game-number">01 / STRATEGY</p>
+          <p class="game-kind">2 PLAYERS</p>
+        </div>
+        <div class="game-art" aria-hidden="true">♔</div>
+        <div class="game-bottom">
+          <div class="game-copy">
+            <h2>王道</h2>
+            <p>王を動かし、兵を置く。読み合いが楽しい7×7の対戦ゲーム。</p>
+          </div>
+          <span class="play-label">遊ぶ <span class="arrow" aria-hidden="true">→</span></span>
+        </div>
+      </a>
+
+      <a class="game-link puyo" href="./archives/puyopuyo/puyopuyo.html">
+        <div class="game-top">
+          <p class="game-number">02 / PUZZLE</p>
+          <p class="game-kind">CPU BATTLE</p>
+        </div>
+        <div class="game-art" aria-hidden="true">●</div>
+        <div class="game-bottom">
+          <div class="game-copy">
+            <h2>Mini Puyo Battle</h2>
+            <p>ぷよをつなげて連鎖を狙う、CPU対戦パズルゲーム。</p>
+          </div>
+          <span class="play-label">遊ぶ <span class="arrow" aria-hidden="true">→</span></span>
+        </div>
+      </a>
+    </nav>
+
+    <footer>
+      <p>MAKIGAYA GAMES</p>
+      <p>ブラウザですぐに遊べます</p>
+    </footer>
+  </main>
+</body>
+</html>
