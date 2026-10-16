@@ -1,10 +1,9 @@
-const SIZE = 8;
+const SIZE = 9;
 const MAX_PAWNS = 15;
 const boardElement = document.getElementById("board");
 const statusElement = document.getElementById("status");
 const turnBanner = document.getElementById("turnBanner");
 const hintElement = document.getElementById("hint");
-const moveModeButton = document.getElementById("moveMode");
 const placeModeButton = document.getElementById("placeMode");
 const resetButton = document.getElementById("resetButton");
 const victoryOverlay = document.getElementById("victoryOverlay");
@@ -19,11 +18,12 @@ const cpuLevelSelect = document.getElementById("cpuLevel");
 
 let state;
 let cpuTimer = null;
+let victoryTimer = null;
 
 function makeState() {
   return {
     board: Array.from({ length: SIZE }, () => Array(SIZE).fill(null)),
-    kings: [{ row: SIZE - 1, col: Math.floor(SIZE / 2) }, { row: 0, col: Math.floor(SIZE / 2) - 1 }],
+    kings: [{ row: SIZE - 1, col: Math.floor(SIZE / 2) }, { row: 0, col: Math.floor(SIZE / 2) }],
     pawns: [[], []],
     currentPlayer: 0,
     mode: "move",
@@ -35,8 +35,10 @@ function makeState() {
 function resetGame() {
   if (cpuTimer !== null) window.clearTimeout(cpuTimer);
   cpuTimer = null;
+  if (victoryTimer !== null) window.clearTimeout(victoryTimer);
+  victoryTimer = null;
   state = makeState();
-  victoryOverlay.classList.remove("show");
+  victoryOverlay.classList.remove("show", "fade-out");
   victoryOverlay.setAttribute("aria-hidden", "true");
   confettiElement.replaceChildren();
   render();
@@ -154,7 +156,8 @@ function chooseCpuAction() {
   const actions = getLegalCpuActions(1);
   if (!actions.length) return null;
   const level = Number(cpuLevelSelect.value);
-  const noiseRange = (10 - level) * 5;
+  const noiseByLevel = { 1: 50, 2: 40, 3: 32, 5: 24, 6: 18, 7: 12, 8: 8, 9: 5, 10: 2, 100: 0 };
+  const noiseRange = noiseByLevel[level];
   let bestAction = actions[0];
   let bestScore = -Infinity;
   for (const action of actions) {
@@ -231,6 +234,11 @@ function showVictory(player) {
   }
   victoryOverlay.classList.add("show");
   victoryOverlay.setAttribute("aria-hidden", "false");
+  victoryTimer = window.setTimeout(() => {
+    victoryOverlay.classList.add("fade-out");
+    victoryOverlay.setAttribute("aria-hidden", "true");
+    victoryTimer = null;
+  }, 8000);
 }
 
 function placePawn(row, col) {
@@ -247,13 +255,15 @@ function placePawn(row, col) {
 
 function handleCellClick(row, col) {
   if (state.winner || isCpuTurn()) return;
-  if (state.mode === "place") { placePawn(row, col); return; }
   const currentKing = state.kings[state.currentPlayer];
-  if (!state.selected && row === currentKing.row && col === currentKing.col) {
-    state.selected = { row, col }; render(); return;
+  if (row === currentKing.row && col === currentKing.col) {
+    state.mode = "move";
+    state.selected = { row, col };
+    render();
+    return;
   }
+  if (state.mode === "place") { placePawn(row, col); return; }
   if (state.selected && isValidDestination(row, col)) { moveKing(row, col); return; }
-  if (row === currentKing.row && col === currentKing.col) { state.selected = { row, col }; render(); }
 }
 
 function render() {
@@ -285,17 +295,14 @@ function render() {
   turnBanner.textContent = state.winner === null ? `${label} の番` : `${getPlayerLabel(state.winner)} の勝利`;
   turnBanner.style.color = player === 0 ? "var(--blue)" : "var(--red)";
   statusElement.textContent = state.winner === null ? (cpuTurn ? "CPUが考えています…" : `${label} が${state.mode === "move" ? "王を動かす" : "兵を置く"}番です。`) : `王を取りました。${getPlayerLabel(state.winner)} の勝ちです。`;
-  hintElement.textContent = state.mode === "move" ? (state.selected ? "青い枠の周囲1マスへ移動できます。隣の自分の兵を飛び越えると2マス進めます" : "王をクリックして、移動先を選択") : "空いているマスをクリックして兵を配置";
-  moveModeButton.classList.toggle("selected", state.mode === "move");
+  hintElement.textContent = state.mode === "move" ? (state.selected ? "青い枠の周囲1マスへ移動できます。隣の自分の兵を飛び越えると2マス進めます" : "王をクリックして、移動先を選択") : "空きマスに兵を配置。王をクリックすると移動できます";
   placeModeButton.classList.toggle("selected", state.mode === "place");
-  moveModeButton.disabled = cpuTurn || state.winner !== null;
   placeModeButton.disabled = cpuTurn || state.winner !== null || state.pawns[player].length >= MAX_PAWNS;
   pawnCountElements.forEach((element, index) => { element.textContent = MAX_PAWNS - state.pawns[index].length; });
   playerPanels.forEach((panel, index) => panel.classList.toggle("active", state.winner === null && index === player));
   scheduleCpuTurn();
 }
 
-moveModeButton.addEventListener("click", () => { if (!state.winner) { state.mode = "move"; state.selected = null; render(); } });
 placeModeButton.addEventListener("click", () => { if (!state.winner && state.pawns[state.currentPlayer].length < MAX_PAWNS) { state.mode = "place"; state.selected = null; render(); } });
 opponentModeSelect.addEventListener("change", resetGame);
 cpuLevelSelect.addEventListener("change", render);

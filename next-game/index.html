@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>王道 | 8x8 ボードゲーム</title>
+  <title>王道 | 9x9 ボードゲーム</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
       <div>
         <p class="eyebrow">TWO KINGS / ONE BOARD</p>
         <h1>王道</h1>
-        <p class="subtitle">王を王で追い詰める、8×8の対戦ゲーム</p>
+        <p class="subtitle">王を王で追い詰める、9×9の対戦ゲーム</p>
       </div>
       <div class="match-settings">
         <label for="opponentMode">対戦相手
@@ -26,13 +26,13 @@
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
-            <option value="4">4</option>
             <option value="5" selected>5</option>
             <option value="6">6</option>
             <option value="7">7</option>
             <option value="8">8</option>
             <option value="9">9</option>
             <option value="10">10</option>
+            <option value="100">100</option>
           </select>
         </label>
       </div>
@@ -50,10 +50,9 @@
       <section class="board-area">
         <div class="turn-banner" id="turnBanner">PLAYER 1 の番</div>
         <div class="board-frame">
-          <div class="board" id="board" role="grid" aria-label="8×8のゲーム盤"></div>
+          <div class="board" id="board" role="grid" aria-label="9×9のゲーム盤"></div>
         </div>
         <div class="action-bar">
-          <button class="action-button selected" id="moveMode" type="button">♔ 王を動かす</button>
           <button class="action-button" id="placeMode" type="button">♟ 兵を置く</button>
           <span class="hint" id="hint">王をクリックして、移動先を選択</span>
         </div>
